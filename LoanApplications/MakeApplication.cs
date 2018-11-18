@@ -11,31 +11,32 @@ namespace LoanApplications
     public static class MakeApplication
     {
         [FunctionName("MakeApplication")]
-        public static async Task<HttpResponseMessage> Run(
+        [return: Queue("brokerevent-status")]
+        public static async Task<LoanApplication> Run(
             [HttpTrigger(AuthorizationLevel.Function, 
-            "get", 
             "post", 
-            Route = "loanapplications/{id}")]HttpRequestMessage req, 
-            string id,
+            Route = null)]
+            HttpRequestMessage req, 
+            //[Queue("brokerevent-status")] IAsyncCollector<LoanApplication> messageQueue,
             TraceWriter log)
         {
-            log.Info("C# HTTP trigger function processed a request.");
+            log.Info("HTTP trigger function MakeApplication processed a request.");
 
-            // parse query parameter
-            //string name = req.GetQueryNameValuePairs()
-                //.FirstOrDefault(q => string.Compare(q.Key, "id", true) == 0)
-                //.Value;
+            LoanApplication application = await req.Content.ReadAsAsync<LoanApplication>();
+            log.Info($"MakeApplication send status to BrokerId: {application.BrokerId} CorrelationId: {application.CorrelationId}");
 
-            if (id == null)
-            {
-                // Get request body
-                dynamic data = await req.Content.ReadAsAsync<object>();
-                id = data?.id;
-            }
-
-            return id == null
-                ? req.CreateResponse(HttpStatusCode.BadRequest, "Please pass an id on the query string or in the request body")
-                : req.CreateResponse(HttpStatusCode.OK, "Hello " + id);
+            return application;
+            //try
+            //{
+            //    await messageQueue.AddAsync(application);
+            //}
+            //catch (System.Exception e)
+            //{
+            //    return req.CreateResponse(HttpStatusCode.BadRequest, $"Cant send application to status queue. Error: {e.Message}");
+            //}
+           
+            //return req.CreateResponse(HttpStatusCode.OK, 
+            //    $"Status message submitted for BrokerId: {application.BrokerId} CorrelationId: {application.CorrelationId}");
         }
     }
 }
