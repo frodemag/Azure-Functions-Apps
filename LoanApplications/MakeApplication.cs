@@ -11,8 +11,8 @@ namespace LoanApplications
     public static class MakeApplication
     {
         [FunctionName("MakeApplication")]
-        [return: Queue("brokerevent-status")]
-        public static async Task<LoanApplication> Run(
+        [return: ServiceBus("broker-status")]
+        public static async Task<BrokerEvent> Run(
             [HttpTrigger(AuthorizationLevel.Function, 
             "post", 
             Route = null)]
@@ -22,7 +22,7 @@ namespace LoanApplications
         {
             log.Info("HTTP trigger function MakeApplication processed a request.");
 
-            LoanApplication application = await req.Content.ReadAsAsync<LoanApplication>();
+            var application = await req.Content.ReadAsAsync<BrokerEvent>();
             log.Info($"MakeApplication send status to BrokerId: {application.BrokerId} CorrelationId: {application.CorrelationId}");
 
             return application;
