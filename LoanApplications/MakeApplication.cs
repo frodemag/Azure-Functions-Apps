@@ -1,12 +1,10 @@
-using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Azure.WebJobs;
 using Microsoft.Azure.WebJobs.Extensions.Http;
 using Microsoft.Azure.WebJobs.Host;
 
-namespace LoanApplications
+namespace BrokerApplication
 {
     public static class MakeApplication
     {
@@ -17,14 +15,13 @@ namespace LoanApplications
             "post", 
             Route = null)]
             HttpRequestMessage req, 
-            //[Queue("brokerevent-status")] IAsyncCollector<LoanApplication> messageQueue,
+            [Queue("brokerevent-status")] IAsyncCollector<BrokerEvent> messageQueue,
             TraceWriter log)
         {
-            log.Info("HTTP trigger function MakeApplication processed a request.");
-
             var application = await req.Content.ReadAsAsync<BrokerEvent>();
-            log.Info($"MakeApplication send status to BrokerId: {application.BrokerId} CorrelationId: {application.CorrelationId}");
-
+            log.Info($"MakeApplication sent status to ServiceBusBrokerId: {application.BrokerId} CorrelationId: {application.CorrelationId}");
+            await messageQueue.AddAsync(application);
+            //Returnerer BrokerEvent 
             return application;
             //try
             //{
